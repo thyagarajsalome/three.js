@@ -1,282 +1,110 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
-
-import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js"; // Import RGBELoader
 
-// Scene and Camera Setup
+// Setup
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  45,
+  30,
   window.innerWidth / window.innerHeight,
-  1,
-  1000
+  0.01, // Near clipping plane adjusted for closer view
+  1000 // Far clipping plane
 );
 
-// Renderer Setup
-const canvas = document.createElement("canvas"); // Ensure canvas is created if not present in HTML
-document.body.appendChild(canvas); // Attach it to the DOM
-const renderer = new THREE.WebGLRenderer({ canvas });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.outputEncoding = THREE.sRGBEncoding;
+// // Skylight settings
+// const skyColor = 0xb1e1ff; // Light blue sky color
+// const groundColor = 0xb97a20; // Warm brownish color for ground reflection
+// const intensity = 1.5; // Moderate intensity
 
-// Orbit Controls
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
+// const skyLight = new THREE.HemisphereLight(skyColor, groundColor, intensity);
+// skyLight.position.set(0, 10, 5); // Position the skylight above the scene
+// scene.add(skyLight); // Add skylight to the scene
 
-// Texture Loader for Mesh
-const textureLoader = new THREE.TextureLoader();
-const color = textureLoader.load("./textures/diffuse.jpg");
-const roughness = textureLoader.load("./textures/roughness.jpg");
-const normal = textureLoader.load("./textures/normal.jpg");
+// // Sunlight
+// const sunLight = new THREE.DirectionalLight(0xffffff, 10);
+// sunLight.position.set(10, 20, 10);
+// scene.add(sunLight);
+
+// Add HDRI Lighting
+// const rgbeLoader = new RGBELoader();
+// rgbeLoader.load(
+//   "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/zwartkops_pit_1k.hdr",
+//   function (texture) {
+//     texture.mapping = THREE.EquirectangularReflectionMapping; // Set mapping to equirectangular for environment map
+
+//     scene.environment = texture; // Apply HDRI as environment
+//     // scene.background = texture; // Optionally set the HDRI as background
+//   }
+// );
+
+// Studio Key Light (Main light)
+const keyLight = new THREE.SpotLight(0xffffff, 200); // Brightness set to 2
+keyLight.position.set(5, 5, 5); // Positioned at an angle
+keyLight.castShadow = true; // Enable shadows for dramatic effect
+scene.add(keyLight);
+
+// Studio Fill Light (Secondary light to soften shadows)
+const fillLight = new THREE.SpotLight(0xffffff, 20); // Softer, less intense
+fillLight.position.set(-5, 3, 5); // Positioned on the opposite side of the key light
+fillLight.castShadow = false; // No shadows to soften the light
+scene.add(fillLight);
+
+// Studio Back Light (Rim light for subject separation)
+const backLight = new THREE.SpotLight(0xffffff, 15);
+backLight.position.set(0, 5, -5); // Positioned behind the subject
+backLight.castShadow = false;
+scene.add(backLight);
+
+// Texture Loader
+// const textureLoader = new THREE.TextureLoader();
+// const color = textureLoader.load("./textures/diffuse.jpg");
+// const roughness = textureLoader.load("./textures/roughness.jpg");
+// const normal = textureLoader.load("./textures/normal.jpg");
 
 // Create RoundedBoxGeometry
-const geometry = new RoundedBoxGeometry(1, 1, 1, 10, 0.05);
-const material = new THREE.MeshStandardMaterial({
-  map: color,
-  roughnessMap: roughness,
-  normalMap: normal,
-  metalness: 0.5,
-  roughness: 0.5,
-});
-
-// Add cube to the scene
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
-
-// Lights
-const primaryLight = new THREE.DirectionalLight(0xffffff, 1);
-primaryLight.position.set(5, 5, 5);
-scene.add(primaryLight);
-
-const secondaryLight = new THREE.PointLight(0xff0000, 1, 50);
-secondaryLight.position.set(-5, 3, 5);
-scene.add(secondaryLight);
-
-const ambientLight = new THREE.AmbientLight(0x404040);
-scene.add(ambientLight);
-
-const rimLight = new THREE.DirectionalLight(0xffffff, 0.5);
-rimLight.position.set(0, 5, -5);
-scene.add(rimLight);
-
-camera.position.set(0, 0, 5);
-const canvas = document.querySelector("canvas");
-const renderer = new THREE.WebGLRenderer({ canvas });
-renderer.setSize(window.innerWidth, window.innerHeight);
+// const geometry = new RoundedBoxGeometry(1, 1, 1, 10, 0.05);
+// const material = new THREE.MeshStandardMaterial({
+//   map: color,
+//   roughnessMap: roughness,
+//   normalMap: normal,
+//   metalness: 0.5,
+//   roughness: 0.5,
+// });
 
 // Handle window resizing
 window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  camera.position = 0;
 });
 
-// GUI Controls
-const gui = new GUI();
+// GLTF Model Loader
+const loader = new GLTFLoader();
+loader.load("./shoe.glb", function (gltf) {
+  scene.add(gltf.scene);
+});
 
-// Material Controls
-const materialFolder = gui.addFolder("Material Properties");
-materialFolder.addColor(material, "color").name("Color");
-materialFolder.add(material, "metalness", 0, 1).name("Metalness");
-materialFolder.add(material, "roughness", 0, 1).name("Roughness");
+// Adjust camera position for better view
+camera.position.set(0, 0.1, 1);
 
-materialFolder
-  .add(
-    {
-      loadTexture: function () {
-        textureLoader.load(
-          "https://threejsfundamentals.org/threejs/resources/images/wall.jpg",
-          (texture) => {
-            material.map = texture;
-            material.needsUpdate = true;
-          },
-          undefined,
-          (error) => {
-            console.error(
-              "An error occurred while loading the texture:",
-              error
-            );
-          }
-        );
-      },
-    },
-    "loadTexture"
-  )
-  .name("Load Texture");
-materialFolder.close();
+// Renderer setup
+const canvas = document.querySelector("canvas");
+const renderer = new THREE.WebGLRenderer({ canvas });
+renderer.setSize(window.innerWidth, window.innerHeight);
 
-// UV Mapping Controls
-const uvFolder = materialFolder.addFolder("UVW Mapping");
-const uvSettings = {
-  offsetX: 0,
-  offsetY: 0,
-  scaleX: 1,
-  scaleY: 1,
-};
+// Enable tone mapping for HDRI lighting
+// renderer.toneMapping = THREE.ACESFilmicToneMapping;
+// renderer.toneMappingExposure = 1.25; // Adjust exposure as needed
+// renderer.outputEncoding = THREE.sRGBEncoding; // Ensure proper color encoding
 
-uvFolder.add(uvSettings, "offsetX", -1, 1).onChange(updateUV).name("Offset X");
-uvFolder.add(uvSettings, "offsetY", -1, 1).onChange(updateUV).name("Offset Y");
-uvFolder.add(uvSettings, "scaleX", 0.1, 5).onChange(updateUV).name("Scale X");
-uvFolder.add(uvSettings, "scaleY", 0.1, 5).onChange(updateUV).name("Scale Y");
-uvFolder.open();
-
-// Function to update UV mapping based on GUI inputs
-function updateUV() {
-  if (material.map) {
-    material.map.offset.set(uvSettings.offsetX, uvSettings.offsetY);
-    material.map.repeat.set(uvSettings.scaleX, uvSettings.scaleY);
-    material.map.needsUpdate = true;
-  }
-}
-
-// Camera Controls
-const cameraFolder = gui.addFolder("Camera Settings");
-const cameraSettings = {
-  positionX: camera.position.x,
-  positionY: camera.position.y,
-  positionZ: camera.position.z,
-  fov: camera.fov,
-};
-
-cameraFolder
-  .add(cameraSettings, "positionX", -10, 10)
-  .onChange((val) => {
-    camera.position.x = val;
-    camera.updateProjectionMatrix();
-  })
-  .name("Position X");
-
-cameraFolder
-  .add(cameraSettings, "positionY", -10, 10)
-  .onChange((val) => {
-    camera.position.y = val;
-    camera.updateProjectionMatrix();
-  })
-  .name("Position Y");
-
-cameraFolder
-  .add(cameraSettings, "positionZ", 1, 20)
-  .onChange((val) => {
-    camera.position.z = val;
-    camera.updateProjectionMatrix();
-  })
-  .name("Position Z");
-
-cameraFolder
-  .add(cameraSettings, "fov", 10, 100)
-  .onChange((val) => {
-    camera.fov = val;
-    camera.updateProjectionMatrix();
-  })
-  .name("Field of View");
-cameraFolder.close();
-
-// Lighting Control Panel
-const lightingFolder = gui.addFolder("Lighting");
-const lightSettings = {
-  primaryLight: {
-    enabled: true,
-    color: primaryLight.color.getHex(),
-    intensity: primaryLight.intensity,
-  },
-  secondaryLight: {
-    enabled: true,
-    color: secondaryLight.color.getHex(),
-    intensity: secondaryLight.intensity,
-  },
-  ambientLight: {
-    enabled: true,
-    color: ambientLight.color.getHex(),
-    intensity: 0.4,
-  },
-  rimLight: {
-    enabled: true,
-    color: rimLight.color.getHex(),
-    intensity: rimLight.intensity,
-  },
-};
-
-// Primary Light Controls
-const primaryLightFolder = lightingFolder.addFolder("Primary Light");
-primaryLightFolder
-  .add(lightSettings.primaryLight, "enabled")
-  .onChange((val) => (primaryLight.visible = val))
-  .name("Enabled");
-primaryLightFolder
-  .addColor(lightSettings.primaryLight, "color")
-  .onChange(() => primaryLight.color.setHex(lightSettings.primaryLight.color))
-  .name("Color");
-primaryLightFolder
-  .add(lightSettings.primaryLight, "intensity", 0, 2)
-  .onChange((val) => (primaryLight.intensity = val))
-  .name("Intensity");
-
-// Secondary Light Controls
-const secondaryLightFolder = lightingFolder.addFolder("Secondary Light");
-secondaryLightFolder
-  .add(lightSettings.secondaryLight, "enabled")
-  .onChange((val) => (secondaryLight.visible = val))
-  .name("Enabled");
-secondaryLightFolder
-  .addColor(lightSettings.secondaryLight, "color")
-  .onChange(() =>
-    secondaryLight.color.setHex(lightSettings.secondaryLight.color)
-  )
-  .name("Color");
-secondaryLightFolder
-  .add(lightSettings.secondaryLight, "intensity", 0, 2)
-  .onChange((val) => (secondaryLight.intensity = val))
-  .name("Intensity");
-
-// Ambient Light Controls
-const ambientLightFolder = lightingFolder.addFolder("Ambient Light");
-ambientLightFolder
-  .add(lightSettings.ambientLight, "enabled")
-  .onChange((val) => (ambientLight.visible = val))
-  .name("Enabled");
-ambientLightFolder
-  .addColor(lightSettings.ambientLight, "color")
-  .onChange(() => ambientLight.color.setHex(lightSettings.ambientLight.color))
-  .name("Color");
-ambientLightFolder
-  .add(lightSettings.ambientLight, "intensity", 0, 2)
-  .onChange((val) => (ambientLight.intensity = val))
-  .name("Intensity");
-
-// Rim Light Controls
-const rimLightFolder = lightingFolder.addFolder("Rim Light");
-rimLightFolder
-  .add(lightSettings.rimLight, "enabled")
-  .onChange((val) => (rimLight.visible = val))
-  .name("Enabled");
-rimLightFolder
-  .addColor(lightSettings.rimLight, "color")
-  .onChange(() => rimLight.color.setHex(lightSettings.rimLight.color))
-  .name("Color");
-rimLightFolder
-  .add(lightSettings.rimLight, "intensity", 0, 2)
-  .onChange((val) => (rimLight.intensity = val))
-  .name("Intensity");
-lightingFolder.close();
-
-// Studio Lighting Settings Preset
-const studioSettings = {
-  setStudioLighting: function () {
-    primaryLight.color.set(0xffffff);
-    primaryLight.intensity = 1.5;
-    secondaryLight.color.set(0xffaa00);
-    secondaryLight.intensity = 0.8;
-    ambientLight.intensity = 0.4;
-    rimLight.intensity = 1;
-  },
-};
-gui.add(studioSettings, "setStudioLighting").name("Apply Studio Preset");
+// Orbit Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.minDistance = 0.1; // Limit how close the camera can go
+controls.maxDistance = 5; // Limit how far the camera can go
 
 function animate() {
   requestAnimationFrame(animate);
