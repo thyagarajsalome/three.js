@@ -49,7 +49,7 @@ function addStudioLighting() {
   fillLight.position.set(-5, 5, 5);
   scene.add(fillLight);
 
-  const backLight = new THREE.DirectionalLight(0xffffff, 3);
+  const backLight = new THREE.DirectionalLight(0xffffff, 5);
   backLight.position.set(0, 5, -5);
   scene.add(backLight);
 
@@ -121,7 +121,7 @@ function centerAndFitObject(object) {
 
   const maxDimension = Math.max(boxSize.x, boxSize.y, boxSize.z);
   const cameraDistance =
-    maxDimension / Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
+    maxDimension / Math.tan(THREE.MathUtils.degToRad(camera.fov) / 1.5);
 
   camera.position.set(0, 0, cameraDistance);
   camera.lookAt(0, 0, 0);
