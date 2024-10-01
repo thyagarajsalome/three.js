@@ -20,6 +20,14 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.1;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
+// Function to set background color
+function setBackgroundColor(r, g, b) {
+  scene.background = new THREE.Color(r / 255, g / 255, b / 255);
+}
+
+// Initial background color (you can change this to any default color you prefer)
+setBackgroundColor(44, 44, 44); // Light gray background (RGB for #a9a9a9)
+
 // Lighting Setup
 function addHDRILighting() {
   const rgbeLoader = new RGBELoader();
@@ -33,11 +41,11 @@ function addHDRILighting() {
 }
 
 function addStudioLighting() {
-  const keyLight = new THREE.DirectionalLight(0xffffff, 10);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 15);
   keyLight.position.set(5, 5, 5);
   scene.add(keyLight);
 
-  const fillLight = new THREE.DirectionalLight(0xffffff, 5);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 10);
   fillLight.position.set(-5, 5, 5);
   scene.add(fillLight);
 
@@ -93,7 +101,7 @@ function applyTextures(mesh) {
     aoMapIntensity: 0.1,
     roughnessMap: textures.specular,
     roughness: 0.95,
-    metalness: 0.1,
+    metalness: 0.01,
     envMapIntensity: 0.5,
   });
 
@@ -146,3 +154,9 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 });
+
+// Example usage of setBackgroundColor function
+// You can call this function with different RGB color values to change the background
+// setBackgroundColor(255, 0, 0);  // Red background
+// setBackgroundColor(0, 255, 0);  // Green background
+// setBackgroundColor(0, 0, 255);  // Blue background
