@@ -71,6 +71,7 @@ const textures = {
   internal: loadTexture("internal"),
   normal: loadTexture("normal"),
   specular: loadTexture("specular"),
+  occlusion: loadTexture("occlusion"),
 };
 
 // Model Loading and Setup
