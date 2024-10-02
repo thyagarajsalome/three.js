@@ -1,7 +1,6 @@
-// Imports
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 
 // Scene, Camera, and Renderer Setup
@@ -12,14 +11,13 @@ const camera = new THREE.PerspectiveCamera(
   0.01,
   1000
 );
-
-const canvas = document.querySelector("canvas");
-const renderer = new THREE.WebGLRenderer({ canvas });
+const canvas = document.getElementById("canvas");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
-// Camera settings (V-Ray-like)
+// Camera settings
 const cameraSettings = {
   exposure: 1.0,
   shutterSpeed: 800 / 200,
@@ -27,7 +25,6 @@ const cameraSettings = {
   fStop: 5.6,
 };
 
-// Function to update camera exposure
 function updateCameraExposure() {
   const ev = Math.log2(
     (cameraSettings.fStop * cameraSettings.fStop) / cameraSettings.shutterSpeed
@@ -36,16 +33,14 @@ function updateCameraExposure() {
   renderer.toneMappingExposure = exposureValue * cameraSettings.exposure;
 }
 
-// Call this function whenever camera settings change
 updateCameraExposure();
 
-// Function to set background color
+// Background color
 function setBackgroundColor(r, g, b) {
   scene.background = new THREE.Color(r / 255, g / 255, b / 255);
 }
 
-// Initial background color (you can change this to any default color you prefer)
-setBackgroundColor(30, 30, 30); // Dark gray background
+setBackgroundColor(30, 30, 30);
 
 // Lighting Setup
 function addHDRILighting() {
@@ -98,13 +93,11 @@ function loadModel() {
   const gltfLoader = new GLTFLoader();
   gltfLoader.load("./shoe.glb", function (gltf) {
     const object = gltf.scene;
-
     object.traverse((child) => {
       if (child.isMesh) {
         applyTextures(child);
       }
     });
-
     scene.add(object);
     centerAndFitObject(object);
   });
@@ -118,8 +111,6 @@ function applyTextures(mesh) {
     aoMap: textures.internal,
     aoMapIntensity: 0.1,
     occlusionMap: textures.occlusion,
-
-    // Updated and new properties
     roughness: 0.5,
     metalness: 0.1,
     envMapIntensity: 1.0,
@@ -175,63 +166,22 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
 });
 
-// Function to update camera settings
-function updateCameraSettings(exposure, shutterSpeed, iso, fStop) {
-  cameraSettings.exposure = exposure;
-  cameraSettings.shutterSpeed = shutterSpeed;
-  cameraSettings.iso = iso;
-  cameraSettings.fStop = fStop;
+// UI Controls
+document.getElementById("exposureSlider").addEventListener("input", (e) => {
+  cameraSettings.exposure = parseFloat(e.target.value);
   updateCameraExposure();
-}
+});
 
-// Function to update material properties
-function updateMaterialProperties(metalness, roughness, envMapIntensity) {
+document.getElementById("metalnessSlider").addEventListener("input", (e) => {
+  const metalness = parseFloat(e.target.value);
   scene.traverse((child) => {
     if (child.isMesh) {
       child.material.metalness = metalness;
-      child.material.roughness = roughness;
-      child.material.envMapIntensity = envMapIntensity;
     }
   });
-}
+});
 
-// Example usage:
-// updateMaterialProperties(0.5, 0.3, 1.2);
-// updateCameraSettings(1.2, 1 / 100, 200, 4);
-// setBackgroundColor(255, 0, 0);  // Red background
-
-// If you want to use MeshPhysicalMaterial for IOR support:
-/*
-function updateToPhysicalMaterial() {
-  scene.traverse((child) => {
-    if (child.isMesh) {
-      const physicalMaterial = new THREE.MeshPhysicalMaterial({
-        map: child.material.map,
-        bumpMap: child.material.bumpMap,
-        normalMap: child.material.normalMap,
-        aoMap: child.material.aoMap,
-        aoMapIntensity: child.material.aoMapIntensity,
-        occlusionMap: child.material.occlusionMap,
-        roughness: child.material.roughness,
-        metalness: child.material.metalness,
-        envMapIntensity: child.material.envMapIntensity,
-        ior: 1.5, // Default IOR
-        transmission: 0 // 0 for opaque, > 0 for transparent materials
-      });
-      child.material = physicalMaterial;
-    }
-  });
-}
-
-function updateIOR(ior) {
-  scene.traverse((child) => {
-    if (child.isMesh && child.material instanceof THREE.MeshPhysicalMaterial) {
-      child.material.ior = ior;
-    }
-  });
-}
-
-// Example usage:
-// updateToPhysicalMaterial();
-// updateIOR(1.5);
-*/
+document.getElementById("bgColorPicker").addEventListener("input", (e) => {
+  const color = new THREE.Color(e.target.value);
+  setBackgroundColor(color.r * 255, color.g * 255, color.b * 255);
+});
