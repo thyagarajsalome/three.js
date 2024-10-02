@@ -17,7 +17,6 @@ const canvas = document.querySelector("canvas");
 const renderer = new THREE.WebGLRenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-// renderer.toneMappingExposure = 0.1;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
 // Camera settings (V-Ray-like)
@@ -118,9 +117,12 @@ function applyTextures(mesh) {
     normalMap: textures.normal,
     aoMap: textures.internal,
     aoMapIntensity: 0.1,
-
     occlusionMap: textures.occlusion,
-    roughness: 0.95,
+
+    // Updated and new properties
+    roughness: 0.5,
+    metalness: 0.1,
+    envMapIntensity: 1.0,
   });
 
   mesh.material = newMaterial;
@@ -173,12 +175,7 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
 });
 
-// Example usage of setBackgroundColor function
-// setBackgroundColor(255, 0, 0);  // Red background
-// setBackgroundColor(0, 255, 0);  // Green background
-// setBackgroundColor(0, 0, 255);  // Blue background
-
-// Example of changing camera settings
+// Function to update camera settings
 function updateCameraSettings(exposure, shutterSpeed, iso, fStop) {
   cameraSettings.exposure = exposure;
   cameraSettings.shutterSpeed = shutterSpeed;
@@ -187,5 +184,54 @@ function updateCameraSettings(exposure, shutterSpeed, iso, fStop) {
   updateCameraExposure();
 }
 
+// Function to update material properties
+function updateMaterialProperties(metalness, roughness, envMapIntensity) {
+  scene.traverse((child) => {
+    if (child.isMesh) {
+      child.material.metalness = metalness;
+      child.material.roughness = roughness;
+      child.material.envMapIntensity = envMapIntensity;
+    }
+  });
+}
+
 // Example usage:
+// updateMaterialProperties(0.5, 0.3, 1.2);
 // updateCameraSettings(1.2, 1 / 100, 200, 4);
+// setBackgroundColor(255, 0, 0);  // Red background
+
+// If you want to use MeshPhysicalMaterial for IOR support:
+/*
+function updateToPhysicalMaterial() {
+  scene.traverse((child) => {
+    if (child.isMesh) {
+      const physicalMaterial = new THREE.MeshPhysicalMaterial({
+        map: child.material.map,
+        bumpMap: child.material.bumpMap,
+        normalMap: child.material.normalMap,
+        aoMap: child.material.aoMap,
+        aoMapIntensity: child.material.aoMapIntensity,
+        occlusionMap: child.material.occlusionMap,
+        roughness: child.material.roughness,
+        metalness: child.material.metalness,
+        envMapIntensity: child.material.envMapIntensity,
+        ior: 1.5, // Default IOR
+        transmission: 0 // 0 for opaque, > 0 for transparent materials
+      });
+      child.material = physicalMaterial;
+    }
+  });
+}
+
+function updateIOR(ior) {
+  scene.traverse((child) => {
+    if (child.isMesh && child.material instanceof THREE.MeshPhysicalMaterial) {
+      child.material.ior = ior;
+    }
+  });
+}
+
+// Example usage:
+// updateToPhysicalMaterial();
+// updateIOR(1.5);
+*/
