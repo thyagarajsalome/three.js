@@ -17,8 +17,28 @@ const canvas = document.querySelector("canvas");
 const renderer = new THREE.WebGLRenderer({ canvas });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.1;
+// renderer.toneMappingExposure = 0.1;
 renderer.outputEncoding = THREE.sRGBEncoding;
+
+// Camera settings (V-Ray-like)
+const cameraSettings = {
+  exposure: 1.0,
+  shutterSpeed: 800 / 200,
+  iso: 100,
+  fStop: 5.6,
+};
+
+// Function to update camera exposure
+function updateCameraExposure() {
+  const ev = Math.log2(
+    (cameraSettings.fStop * cameraSettings.fStop) / cameraSettings.shutterSpeed
+  );
+  const exposureValue = Math.pow(2, -ev) * (cameraSettings.iso / 100);
+  renderer.toneMappingExposure = exposureValue * cameraSettings.exposure;
+}
+
+// Call this function whenever camera settings change
+updateCameraExposure();
 
 // Function to set background color
 function setBackgroundColor(r, g, b) {
@@ -26,7 +46,7 @@ function setBackgroundColor(r, g, b) {
 }
 
 // Initial background color (you can change this to any default color you prefer)
-setBackgroundColor(44, 44, 44); // Light gray background (RGB for #a9a9a9)
+setBackgroundColor(30, 30, 30); // Dark gray background
 
 // Lighting Setup
 function addHDRILighting() {
@@ -49,7 +69,7 @@ function addStudioLighting() {
   fillLight.position.set(-5, 5, 5);
   scene.add(fillLight);
 
-  const backLight = new THREE.DirectionalLight(0xffffff, 5);
+  const backLight = new THREE.DirectionalLight(0xffffff, 7);
   backLight.position.set(0, 5, -5);
   scene.add(backLight);
 
@@ -95,15 +115,12 @@ function applyTextures(mesh) {
   const newMaterial = new THREE.MeshStandardMaterial({
     map: textures.diffuse,
     bumpMap: textures.bump,
-    bumpScale: 0.1,
-    displacementScale: 0.5,
     normalMap: textures.normal,
     aoMap: textures.internal,
     aoMapIntensity: 0.1,
-    roughnessMap: textures.specular,
+
+    occlusionMap: textures.occlusion,
     roughness: 0.95,
-    metalness: 0.01,
-    envMapIntensity: 0.5,
   });
 
   mesh.material = newMaterial;
@@ -157,7 +174,18 @@ window.addEventListener("resize", () => {
 });
 
 // Example usage of setBackgroundColor function
-// You can call this function with different RGB color values to change the background
 // setBackgroundColor(255, 0, 0);  // Red background
 // setBackgroundColor(0, 255, 0);  // Green background
 // setBackgroundColor(0, 0, 255);  // Blue background
+
+// Example of changing camera settings
+function updateCameraSettings(exposure, shutterSpeed, iso, fStop) {
+  cameraSettings.exposure = exposure;
+  cameraSettings.shutterSpeed = shutterSpeed;
+  cameraSettings.iso = iso;
+  cameraSettings.fStop = fStop;
+  updateCameraExposure();
+}
+
+// Example usage:
+// updateCameraSettings(1.2, 1 / 100, 200, 4);
